@@ -1,0 +1,11 @@
+[package]
+name = "cmakr"
+version = "0.1.0"
+authors = ["crumblingstatue <radiantstatue@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+toml = "0.4.8"
+serde = "1.0.80"
+serde_derive = "1.0.80"
+clap = "2.32.0"
