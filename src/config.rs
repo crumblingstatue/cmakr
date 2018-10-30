@@ -7,6 +7,8 @@ crate struct Config {
     crate targets: HashMap<String, Target>,
     #[serde(rename = "build-path", default = "default_build_path")]
     crate build_path: String,
+    #[serde(rename = "default-bin", default)]
+    crate default_bin: String,
 }
 
 fn default_build_path() -> String {

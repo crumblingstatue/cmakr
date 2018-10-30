@@ -41,7 +41,11 @@ fn main() -> Result<(), Box<Error>> {
             SubCommand::with_name("run")
                 .aliases(&["r"])
                 .arg(Arg::with_name("target").index(1).required(true))
-                .arg(Arg::with_name("bin").index(2).required(true)),
+                .arg(
+                    Arg::with_name("bin")
+                        .index(2)
+                        .required(conf.default_bin.is_empty()),
+                ),
         )
         .get_matches();
 
@@ -51,7 +55,7 @@ fn main() -> Result<(), Box<Error>> {
         run_target(
             &conf,
             matches.value_of("target").unwrap(),
-            matches.value_of("bin").unwrap(),
+            matches.value_of("bin").unwrap_or(&conf.default_bin),
         )?;
     }
 
