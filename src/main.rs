@@ -81,7 +81,10 @@ fn build_target(conf: &Config, name: &str) -> Result<(), Box<Error>> {
 }
 
 fn run_target(conf: &Config, name: &str, bin: &str) -> Result<(), Box<Error>> {
+    let invocation_path = std::env::current_dir()?;
     build_target(conf, name)?;
-    Command::new(PathBuf::from("./").join(bin)).status()?;
+    Command::new(std::env::current_dir()?.join(bin))
+        .current_dir(invocation_path)
+        .status()?;
     Ok(())
 }
