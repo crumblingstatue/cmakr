@@ -28,7 +28,7 @@ fn load_conf() -> Result<Config, Box<Error>> {
     Ok(toml::from_str(&s)?)
 }
 
-fn main() -> Result<(), Box<Error>> {
+fn run() -> Result<(), Box<Error>> {
     let conf = load_conf()?;
 
     let args: Vec<String> = std::env::args().collect();
@@ -57,17 +57,41 @@ fn main() -> Result<(), Box<Error>> {
 
     let invocation_path = std::env::current_dir()?;
 
-    build_target(&conf, matches.free.get(0).unwrap_or(&conf.default_target))?;
+    let target_name = match matches.free.get(0) {
+        Some(name) => name,
+        None => {
+            if conf.default_target.is_empty() {
+                return Err("No target specified and no default-target in `cmakr.toml`.".into());
+            } else {
+                &conf.default_target
+            }
+        }
+    };
+
+    build_target(&conf, target_name)?;
     if matches.opt_present("run") {
-        Command::new(
-            std::env::current_dir()?
-                .join(matches.opt_str("run").as_ref().unwrap_or(&conf.default_bin)),
-        )
-        .current_dir(invocation_path)
-        .status()?;
+        let bin_name = match matches.opt_str("run") {
+            Some(name) => name,
+            None => {
+                if conf.default_bin.is_empty() {
+                    return Err("No binary specified and no default-bin in `cmakr.toml`".into());
+                } else {
+                    conf.default_bin
+                }
+            }
+        };
+        Command::new(std::env::current_dir()?.join(bin_name))
+            .current_dir(invocation_path)
+            .status()?;
     }
 
     Ok(())
+}
+
+fn main() {
+    if let Err(e) = run() {
+        eprintln!("Error: {}", e);
+    }
 }
 
 fn print_usage(program: &str, opts: &Options) {
