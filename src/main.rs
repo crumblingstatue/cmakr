@@ -33,14 +33,20 @@ fn main() -> Result<(), Box<Error>> {
     let matches = App::new("cmakr")
         .setting(clap::AppSettings::SubcommandRequiredElseHelp)
         .subcommand(
-            SubCommand::with_name("build")
-                .aliases(&["b"])
-                .arg(Arg::with_name("target").index(1).required(true)),
+            SubCommand::with_name("build").aliases(&["b"]).arg(
+                Arg::with_name("target")
+                    .index(1)
+                    .required(conf.default_target.is_empty()),
+            ),
         )
         .subcommand(
             SubCommand::with_name("run")
                 .aliases(&["r"])
-                .arg(Arg::with_name("target").index(1).required(true))
+                .arg(
+                    Arg::with_name("target")
+                        .index(1)
+                        .required(conf.default_target.is_empty()),
+                )
                 .arg(
                     Arg::with_name("bin")
                         .index(2)
@@ -50,11 +56,14 @@ fn main() -> Result<(), Box<Error>> {
         .get_matches();
 
     if let Some(matches) = matches.subcommand_matches("build") {
-        build_target(&conf, matches.value_of("target").unwrap())?;
+        build_target(
+            &conf,
+            matches.value_of("target").unwrap_or(&conf.default_target),
+        )?;
     } else if let Some(matches) = matches.subcommand_matches("run") {
         run_target(
             &conf,
-            matches.value_of("target").unwrap(),
+            matches.value_of("target").unwrap_or(&conf.default_target),
             matches.value_of("bin").unwrap_or(&conf.default_bin),
         )?;
     }

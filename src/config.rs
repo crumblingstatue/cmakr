@@ -9,6 +9,8 @@ crate struct Config {
     crate build_path: String,
     #[serde(rename = "default-bin", default)]
     crate default_bin: String,
+    #[serde(rename = "default-target", default)]
+    crate default_target: String,
 }
 
 fn default_build_path() -> String {
