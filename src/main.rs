@@ -1,8 +1,8 @@
 #![feature(crate_visibility_modifier)]
 
 use {
-    clap::{App, Arg, SubCommand},
     crate::config::Config,
+    getopts::{HasArg, Occur, Options},
     std::{error::Error, path::PathBuf, process::Command},
 };
 
@@ -30,45 +30,49 @@ fn load_conf() -> Result<Config, Box<Error>> {
 
 fn main() -> Result<(), Box<Error>> {
     let conf = load_conf()?;
-    let matches = App::new("cmakr")
-        .setting(clap::AppSettings::SubcommandRequiredElseHelp)
-        .subcommand(
-            SubCommand::with_name("build").aliases(&["b"]).arg(
-                Arg::with_name("target")
-                    .index(1)
-                    .required(conf.default_target.is_empty()),
-            ),
-        )
-        .subcommand(
-            SubCommand::with_name("run")
-                .aliases(&["r"])
-                .arg(
-                    Arg::with_name("target")
-                        .index(1)
-                        .required(conf.default_target.is_empty()),
-                )
-                .arg(
-                    Arg::with_name("bin")
-                        .index(2)
-                        .required(conf.default_bin.is_empty()),
-                ),
-        )
-        .get_matches();
 
-    if let Some(matches) = matches.subcommand_matches("build") {
-        build_target(
-            &conf,
-            matches.value_of("target").unwrap_or(&conf.default_target),
-        )?;
-    } else if let Some(matches) = matches.subcommand_matches("run") {
-        run_target(
-            &conf,
-            matches.value_of("target").unwrap_or(&conf.default_target),
-            matches.value_of("bin").unwrap_or(&conf.default_bin),
-        )?;
+    let args: Vec<String> = std::env::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.opt(
+        "r",
+        "run",
+        "Run a binary after building",
+        "Hint? Wut?",
+        HasArg::Maybe,
+        Occur::Optional,
+    );
+    opts.optflag("h", "help", "print this help menu");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(f) => panic!(f.to_string()),
+    };
+
+    if matches.opt_present("h") {
+        print_usage(&program, &opts);
+        return Ok(());
+    }
+
+    let invocation_path = std::env::current_dir()?;
+
+    build_target(&conf, matches.free.get(0).unwrap_or(&conf.default_target))?;
+    if matches.opt_present("run") {
+        Command::new(
+            std::env::current_dir()?
+                .join(matches.opt_str("run").as_ref().unwrap_or(&conf.default_bin)),
+        )
+        .current_dir(invocation_path)
+        .status()?;
     }
 
     Ok(())
+}
+
+fn print_usage(program: &str, opts: &Options) {
+    let brief = format!("Usage: {} FILE [options]", program);
+    print!("{}", opts.usage(&brief));
 }
 
 fn build_target(conf: &Config, name: &str) -> Result<(), Box<Error>> {
@@ -90,14 +94,5 @@ fn build_target(conf: &Config, name: &str) -> Result<(), Box<Error>> {
             .status()?;
     }
     Command::new(&target_info.build_command).status()?;
-    Ok(())
-}
-
-fn run_target(conf: &Config, name: &str, bin: &str) -> Result<(), Box<Error>> {
-    let invocation_path = std::env::current_dir()?;
-    build_target(conf, name)?;
-    Command::new(std::env::current_dir()?.join(bin))
-        .current_dir(invocation_path)
-        .status()?;
     Ok(())
 }
