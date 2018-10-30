@@ -64,18 +64,18 @@ fn build_target(conf: &Config, name: &str) -> Result<(), Box<Error>> {
         None => return Err(format!("No target named {}.", name).into()),
     };
     let target_path = PathBuf::from(&conf.build_path).join(name);
-    let create_dir_result = std::fs::create_dir_all(&target_path);
-    if let Err(e) = create_dir_result {
-        if e.kind() == std::io::ErrorKind::AlreadyExists {
-            // TODO: Assume fresh state if did didn't exist before
-        }
+    let already_generated = std::fs::metadata(&target_path).is_ok();
+    if !already_generated {
+        std::fs::create_dir_all(&target_path)?;
     }
     std::env::set_current_dir(&target_path)?;
-    // TODO: Proper root dir detection
-    Command::new("cmake")
-        .arg("../..")
-        .args(&target_info.args)
-        .status()?;
+    if !already_generated {
+        // TODO: Proper root dir detection
+        Command::new("cmake")
+            .arg("../..")
+            .args(&target_info.args)
+            .status()?;
+    }
     Command::new(&target_info.build_command).status()?;
     Ok(())
 }
