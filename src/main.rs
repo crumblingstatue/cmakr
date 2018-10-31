@@ -3,7 +3,7 @@
 use {
     crate::config::Config,
     getopts::{HasArg, Occur, Options},
-    std::{error::Error, path::PathBuf, process::Command},
+    std::{error::Error, path::Path, path::PathBuf, process::Command},
 };
 
 mod config;
@@ -80,12 +80,27 @@ fn run() -> Result<(), Box<Error>> {
                 }
             }
         };
-        Command::new(std::env::current_dir()?.join(bin_name))
-            .current_dir(invocation_path)
-            .status()?;
+        exec(&bin_name, &invocation_path)?;
     }
-
     Ok(())
+}
+
+#[cfg(not(unix))]
+fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
+    Command::new(std::env::current_dir()?.join(bin_name))
+        .current_dir(wd_path)
+        .status()?;
+    Ok(())
+}
+
+#[cfg(unix)]
+fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
+    use std::os::unix::process::CommandExt;
+    Command::new(std::env::current_dir()?.join(bin_name))
+        .current_dir(wd_path)
+        .exec();
+    // If we are at this point exec failed to replace our process, abort.
+    std::process::abort();
 }
 
 fn main() {
