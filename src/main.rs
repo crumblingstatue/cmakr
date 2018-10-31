@@ -47,7 +47,7 @@ fn run() -> Result<(), Box<Error>> {
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
-        Err(f) => panic!(f.to_string()),
+        Err(e) => return Err(e.into()),
     };
 
     if matches.opt_present("h") {
