@@ -96,9 +96,11 @@ fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
 #[cfg(unix)]
 fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
     use std::os::unix::process::CommandExt;
-    Command::new(std::env::current_dir()?.join(bin_name))
-        .current_dir(wd_path)
-        .exec();
+    let bin_path = std::env::current_dir()?.join(bin_name);
+    if !bin_path.exists() {
+        return Err(format!("{:?} doesn't exist", bin_path).into());
+    }
+    Command::new(bin_path).current_dir(wd_path).exec();
     // If we are at this point exec failed to replace our process, abort.
     std::process::abort();
 }
