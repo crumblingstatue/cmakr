@@ -40,6 +40,8 @@ cmakr
 cmakr release -r shootr
 # Now if you have both `default-target` and `default-bin` defined in `cmakr.toml`, you can simply
 cmakr -r
+# Anything after -- is considered args to the binary you're running
+cmakr -r shootr -- --godmode --debug levels/01.lvl
 ```
 
 That's pretty much it in a nutshell.

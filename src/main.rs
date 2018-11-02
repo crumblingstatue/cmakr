@@ -3,7 +3,7 @@
 use {
     crate::config::Config,
     getopts::{HasArg, Occur, Options},
-    std::{error::Error, path::Path, path::PathBuf, process::Command},
+    std::{error::Error, ffi::OsStr, path::Path, path::PathBuf, process::Command},
 };
 
 mod config;
@@ -31,9 +31,8 @@ fn load_conf() -> Result<Config, Box<Error>> {
 fn run() -> Result<(), Box<Error>> {
     let conf = load_conf()?;
 
-    let args: Vec<String> = std::env::args().collect();
-    let program = args[0].clone();
-
+    let mut args = std::env::args();
+    let program = args.next().unwrap();
     let mut opts = Options::new();
     opts.opt(
         "r",
@@ -44,8 +43,16 @@ fn run() -> Result<(), Box<Error>> {
         Occur::Optional,
     );
     opts.optflag("h", "help", "print this help menu");
+    let mut my_args = Vec::new();
+    while let Some(s) = args.next() {
+        if s == "--" {
+            break;
+        } else {
+            my_args.push(s);
+        }
+    }
 
-    let matches = match opts.parse(&args[1..]) {
+    let matches = match opts.parse(my_args) {
         Ok(m) => m,
         Err(e) => return Err(e.into()),
     };
@@ -80,27 +87,39 @@ fn run() -> Result<(), Box<Error>> {
                 }
             }
         };
-        exec(&bin_name, &invocation_path)?;
+        exec(&bin_name, &invocation_path, args)?;
     }
     Ok(())
 }
 
 #[cfg(not(unix))]
-fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
+fn exec<I, S>(bin_name: &str, wd_path: &Path, args: I) -> Result<(), Box<Error>>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     Command::new(std::env::current_dir()?.join(bin_name))
         .current_dir(wd_path)
+        .args(args)
         .status()?;
     Ok(())
 }
 
 #[cfg(unix)]
-fn exec(bin_name: &str, wd_path: &Path) -> Result<(), Box<Error>> {
+fn exec<I, S>(bin_name: &str, wd_path: &Path, args: I) -> Result<(), Box<Error>>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
     use std::os::unix::process::CommandExt;
     let bin_path = std::env::current_dir()?.join(bin_name);
     if !bin_path.exists() {
         return Err(format!("{:?} doesn't exist", bin_path).into());
     }
-    Command::new(bin_path).current_dir(wd_path).exec();
+    Command::new(bin_path)
+        .current_dir(wd_path)
+        .args(args)
+        .exec();
     // If we are at this point exec failed to replace our process, abort.
     std::process::abort();
 }
