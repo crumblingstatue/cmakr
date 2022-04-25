@@ -2,10 +2,10 @@
 name = "cmakr"
 version = "0.1.0"
 authors = ["crumblingstatue <radiantstatue@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-toml = "0.4.8"
-serde = "1.0.80"
-serde_derive = "1.0.80"
-getopts = "0.2.18"
+toml = "0.5.9"
+serde = "1.0.136"
+serde_derive = "1.0.136"
+getopts = "0.2.21"

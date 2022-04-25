@@ -9,7 +9,7 @@ use {
 mod config;
 
 /// Ascend until we can find a cmakr.toml
-fn find_conf_file() -> Result<PathBuf, Box<Error>> {
+fn find_conf_file() -> Result<PathBuf, Box<dyn Error>> {
     loop {
         let current_dir = std::env::current_dir()?;
         if std::fs::metadata("cmakr.toml").is_ok() {
@@ -22,13 +22,13 @@ fn find_conf_file() -> Result<PathBuf, Box<Error>> {
     }
 }
 
-fn load_conf() -> Result<Config, Box<Error>> {
+fn load_conf() -> Result<Config, Box<dyn Error>> {
     let conf_path = find_conf_file()?;
     let s = std::fs::read_to_string(conf_path)?;
     Ok(toml::from_str(&s)?)
 }
 
-fn run() -> Result<(), Box<Error>> {
+fn run() -> Result<(), Box<dyn Error>> {
     let conf = load_conf()?;
 
     let mut args = std::env::args();
@@ -44,7 +44,7 @@ fn run() -> Result<(), Box<Error>> {
     );
     opts.optflag("h", "help", "print this help menu");
     let mut my_args = Vec::new();
-    while let Some(s) = args.next() {
+    for s in args.by_ref() {
         if s == "--" {
             break;
         } else {
@@ -106,7 +106,7 @@ where
 }
 
 #[cfg(unix)]
-fn exec<I, S>(bin_name: &str, wd_path: &Path, args: I) -> Result<(), Box<Error>>
+fn exec<I, S>(bin_name: &str, wd_path: &Path, args: I) -> Result<(), Box<dyn Error>>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
@@ -135,7 +135,7 @@ fn print_usage(program: &str, opts: &Options) {
     print!("{}", opts.usage(&brief));
 }
 
-fn build_target(conf: &Config, name: &str) -> Result<(), Box<Error>> {
+fn build_target(conf: &Config, name: &str) -> Result<(), Box<dyn Error>> {
     let target_info = match conf.targets.get(name) {
         Some(info) => info,
         None => return Err(format!("No target named {}.", name).into()),
