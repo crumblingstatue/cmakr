@@ -1,5 +1,3 @@
-#![feature(crate_visibility_modifier)]
-
 use {
     crate::config::Config,
     getopts::{HasArg, Occur, Options},

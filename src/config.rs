@@ -2,15 +2,15 @@ use serde_derive::Deserialize;
 use std::collections::HashMap;
 
 #[derive(Deserialize)]
-crate struct Config {
+pub(crate) struct Config {
     #[serde(rename = "target")]
-    crate targets: HashMap<String, Target>,
+    pub(crate) targets: HashMap<String, Target>,
     #[serde(rename = "build-path", default = "default_build_path")]
-    crate build_path: String,
+    pub(crate) build_path: String,
     #[serde(rename = "default-bin", default)]
-    crate default_bin: String,
+    pub(crate) default_bin: String,
     #[serde(rename = "default-target", default)]
-    crate default_target: String,
+    pub(crate) default_target: String,
 }
 
 fn default_build_path() -> String {
@@ -18,8 +18,8 @@ fn default_build_path() -> String {
 }
 
 #[derive(Deserialize)]
-crate struct Target {
-    crate args: Vec<String>,
+pub(crate) struct Target {
+    pub(crate) args: Vec<String>,
     #[serde(rename = "build")]
-    crate build_command: String,
+    pub(crate) build_command: String,
 }
